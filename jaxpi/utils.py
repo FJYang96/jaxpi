@@ -1,14 +1,12 @@
 import os
-
 from functools import partial
 
 import jax
 import jax.numpy as jnp
-from jax import jit, grad
-from jax.tree_util import tree_map
-from jax.flatten_util import ravel_pytree
-
 from flax.training import checkpoints
+from jax import grad, jit
+from jax.flatten_util import ravel_pytree
+from jax.tree_util import tree_leaves, tree_map
 
 
 def flatten_pytree(pytree):
@@ -49,14 +47,14 @@ def restore_checkpoint(state, workdir, step=None):
     # if so, reduce to a single device sharding
 
     if isinstance(
-        tree_map(lambda x: jnp.array(x).sharding, jax.tree.leaves(state.params))[0],
+        tree_map(lambda x: jnp.array(x).sharding, tree_leaves(state.params))[0],
         jax.sharding.PmapSharding,
     ):
         state = tree_map(lambda x: x[0], state)
 
     # ensuring that we're in a single device setting
     assert isinstance(
-        tree_map(lambda x: jnp.array(x).sharding, jax.tree.leaves(state.params))[0],
+        tree_map(lambda x: jnp.array(x).sharding, tree_leaves(state.params))[0],
         jax.sharding.SingleDeviceSharding,
     )
 
